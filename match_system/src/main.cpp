@@ -51,6 +51,7 @@ class Pool {
             std::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
             SaveClient client(protocol);
 
+            // 连接服务器
             try {
                 transport->open();
 
