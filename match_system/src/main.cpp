@@ -27,8 +27,8 @@ using namespace ::apache::thrift::protocol;
 using namespace ::apache::thrift::transport;
 using namespace ::apache::thrift::server;
 
-using namespace  ::match_service;
-using namespace  ::save_service;
+using namespace ::match_service;
+using namespace ::save_service;
 using namespace std;
 
 // 定义一个任务类型
@@ -88,26 +88,8 @@ class Pool {
             }
 
             while(users.size() > 1){
-                /*
-                   auto a = users[0], b = users[1]; // 选出两个用于匹配的玩家
-                   users.erase(users.begin());
-                   users.erase(users.begin());
-
-                   save_result(a.id, b.id);
-                   */
-                // 分差50以内的才能匹配
-                // sort(users.begin(), users.end(), [&](User &a, User &b) {return a.score < b.score;});
                 bool flag = true; // 如果分差大于50会一直死循环
-                for(uint32_t i = 1; i < users.size(); i ++) {
-                    /*
-                    auto a = users[i - 1], b = users[i];
-                    if(b.score - a.score <= 50) {
-                        users.erase(users.begin() + i - 1, users.begin() + i + 1); // 区间左闭右开
-                        save_result(a.id, b.id);
-
-                        flag = false;
-                        break;
-                    */
+                for(uint32_t i = 0; i < users.size(); i ++) {
                     for(uint32_t j = i + 1; j < users.size(); j ++) {
                         if(check_match(i, j)) {
                             auto a = users[i], b = users[j];
