@@ -16,6 +16,7 @@
 #include <condition_variable>
 #include <queue>
 #include <vector>
+#include <unistd.h>
 
 using namespace ::apache::thrift;
 using namespace ::apache::thrift::protocol;
@@ -66,12 +67,28 @@ class Pool {
         // 匹配玩家
         void match() {
             while(users.size() > 1){
+                /*
                 auto a = users[0], b = users[1]; // 选出两个用于匹配的玩家
                 users.erase(users.begin());
                 users.erase(users.begin());
 
                 save_result(a.id, b.id);
-            };
+                */
+                // 分差50以内的才能匹配
+                sort(users.begin(), users.end(), [&](User &a, User &b) {return a.score < b.score;});
+                bool flag = true; // 如果分差大于50会一直死循环
+                for(uint32_t i = 1; i < users.size(); i ++) {
+                    auto a = users[i - 1], b = users[i];
+                    if(b.score - a.score <= 50) {
+                        users.erase(users.begin() + i - 1, users.begin() + i + 1); // 区间左闭右开
+                        save_result(a.id, b.id);
+
+                        flag = false;
+                        break;
+                    }
+                }
+                if(flag) break;
+            }
         }
 
         // 添加玩家
@@ -124,7 +141,10 @@ void consume_task(){
     while(true) {
         unique_lock<mutex> lck(message_queue.m);
         if(message_queue.q.empty()) {
-            message_queue.cv.wait(lck); // 先将锁释放掉然后卡住，卡到将这个条件变量唤醒;如果队列是空的，将其锁住，直到有新用户加入才解锁
+            // message_queue.cv.wait(lck); // 先将锁释放掉然后卡住，卡到将这个条件变量唤醒;如果队列是空的，将其锁住，直到有新用户加入才解锁
+            lck.unlock();
+            pool.match();
+            sleep(1);
         }else {
             auto task = message_queue.q.front();
             message_queue.q.pop();
